@@ -31,8 +31,8 @@ void UART_ISR()
 
 void Timer_ISR()
 {
-	*(unsigned int*) AHB_VGA_BASE = counter;                     // print digit (ASCII '1'�'9')
-	*(unsigned int*) AHB_7SEG_BASE = counter - 0x30;            // 7-seg uses 0�9, not ASCII
+	*(unsigned int*) AHB_VGA_BASE = counter;                     // print digit (ASCII '0'-'9')
+	*(unsigned int*) AHB_7SEG_BASE = counter - 0x30;            // 7-seg uses 0-9, not ASCII
 
 	counter++;
 	if (counter==0x3A)
@@ -56,10 +56,22 @@ int main(void) {
 	*(unsigned int*) (AHB_7SEG_BASE +0x08)= 0;		
 	*(unsigned int*) (AHB_7SEG_BASE +0x0C)= 0;		
 	while(1){
-		*(unsigned int*) (AHB_GPIO_BASE + 0x04) = 0x0000;          // set read mode
-		int sw = *(unsigned int*) AHB_GPIO_BASE;                    // read switches
-		*(unsigned int*) (AHB_GPIO_BASE + 0x04) = 0x0001;  // was 0x00FF; set write mode
-		*(unsigned int*) AHB_GPIO_BASE = sw;                        // write to LEDs
+		*(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;   // set read mode
+		int input = *(volatile unsigned int*) AHB_GPIO_BASE;        // read buttons + switches
+
+		int btnU = (input >> 8) & 1;
+		int btnD = (input >> 9) & 1;
+		int btnL = (input >> 10) & 1;
+		int btnR = (input >> 11) & 1;
+		int sw   =  input & 0xFF;
+
+		if (btnU) *(volatile unsigned int*) AHB_UART_BASE = 'U';
+		if (btnD) *(volatile unsigned int*) AHB_UART_BASE = 'D';
+		if (btnL) *(volatile unsigned int*) AHB_UART_BASE = 'L';
+		if (btnR) *(volatile unsigned int*) AHB_UART_BASE = 'R';
+
+		*(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0001;   // set write mode
+		*(volatile unsigned int*) AHB_GPIO_BASE = sw;               // mirror switches to LEDs
 	}
 }
 

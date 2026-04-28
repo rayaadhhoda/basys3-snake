@@ -31,8 +31,8 @@
     Program header entries: 1
     Section header entries: 15
 
-    Program header offset: 11144 (0x00002b88)
-    Section header offset: 11176 (0x00002ba8)
+    Program header offset: 11536 (0x00002d10)
+    Section header offset: 11568 (0x00002d30)
 
     Section header string table index: 14
 
@@ -44,8 +44,8 @@
     File Offset   : 64 (0x40)
     Virtual Addr  : 0x00000000
     Physical Addr : 0x00000000
-    Size in file  : 696 bytes (0x2b8)
-    Size in memory: 2848 bytes (0xb20)
+    Size in file  : 812 bytes (0x32c)
+    Size in memory: 2960 bytes (0xb90)
     Flags         : PF_X + PF_W + PF_R + PF_ARM_ENTRY (0x80000007)
     Alignment     : 16
 
@@ -59,7 +59,7 @@
     Flags       : SHF_ALLOC + SHF_EXECINSTR (0x00000006)
     Addr        : 0x00000000
     File Offset : 64 (0x40)
-    Size        : 692 bytes (0x2b4)
+    Size        : 808 bytes (0x328)
     Link        : SHN_UNDEF
     Info        : 0
     Alignment   : 4
@@ -147,8 +147,8 @@
         0x000000d0:    e7df        ..      B        __scatterload_loop ; 0x92
     $d
         0x000000d2:    0000        ..      DCW    0
-        0x000000d4:    000001c0    ....    DCD    448
-        0x000000d8:    000001e0    ....    DCD    480
+        0x000000d4:    00000234    4...    DCD    564
+        0x000000d8:    00000254    T...    DCD    596
     $t
     !!handler_copy
     __scatterload_copy
@@ -400,7 +400,7 @@
         0x000001fc:    283a        :(      CMP      r0,#0x3a
         0x000001fe:    d104        ..      BNE      0x20a ; Timer_ISR + 42
         0x00000200:    e7ff        ..      B        0x202 ; Timer_ISR + 34
-        0x00000202:    491d        .I      LDR      r1,[pc,#116] ; [0x278] = 0x52000008
+        0x00000202:    493a        :I      LDR      r1,[pc,#232] ; [0x2ec] = 0x52000008
         0x00000204:    2000        .       MOVS     r0,#0
         0x00000206:    6008        .`      STR      r0,[r1,#0]
         0x00000208:    e7ff        ..      B        0x20a ; Timer_ISR + 42
@@ -423,71 +423,129 @@
         0x00000224:    4770        pG      BX       lr
         0x00000226:    0000        ..      MOVS     r0,r0
     main
-        0x00000228:    b082        ..      SUB      sp,sp,#8
+        0x00000228:    b087        ..      SUB      sp,sp,#0x1c
         0x0000022a:    2000        .       MOVS     r0,#0
-        0x0000022c:    9001        ..      STR      r0,[sp,#4]
+        0x0000022c:    9006        ..      STR      r0,[sp,#0x18]
         0x0000022e:    2129        )!      MOVS     r1,#0x29
         0x00000230:    064a        J.      LSLS     r2,r1,#25
-        0x00000232:    4910        .I      LDR      r1,[pc,#64] ; [0x274] = 0x2faf080
+        0x00000232:    492d        -I      LDR      r1,[pc,#180] ; [0x2e8] = 0x2faf080
         0x00000234:    6011        .`      STR      r1,[r2,#0]
-        0x00000236:    4a10        .J      LDR      r2,[pc,#64] ; [0x278] = 0x52000008
+        0x00000236:    4a2d        -J      LDR      r2,[pc,#180] ; [0x2ec] = 0x52000008
         0x00000238:    2103        .!      MOVS     r1,#3
         0x0000023a:    6011        .`      STR      r1,[r2,#0]
         0x0000023c:    2201        ."      MOVS     r2,#1
         0x0000023e:    0392        ..      LSLS     r2,r2,#14
-        0x00000240:    4b0e        .K      LDR      r3,[pc,#56] ; [0x27c] = 0xe000e400
+        0x00000240:    4b2b        +K      LDR      r3,[pc,#172] ; [0x2f0] = 0xe000e400
         0x00000242:    601a        .`      STR      r2,[r3,#0]
-        0x00000244:    4a0e        .J      LDR      r2,[pc,#56] ; [0x280] = 0xe000e100
+        0x00000244:    4a2b        +J      LDR      r2,[pc,#172] ; [0x2f4] = 0xe000e100
         0x00000246:    6011        .`      STR      r1,[r2,#0]
         0x00000248:    2115        .!      MOVS     r1,#0x15
         0x0000024a:    0689        ..      LSLS     r1,r1,#26
         0x0000024c:    6008        .`      STR      r0,[r1,#0]
-        0x0000024e:    490d        .I      LDR      r1,[pc,#52] ; [0x284] = 0x54000004
+        0x0000024e:    492a        *I      LDR      r1,[pc,#168] ; [0x2f8] = 0x54000004
         0x00000250:    6008        .`      STR      r0,[r1,#0]
-        0x00000252:    490d        .I      LDR      r1,[pc,#52] ; [0x288] = 0x54000008
+        0x00000252:    492a        *I      LDR      r1,[pc,#168] ; [0x2fc] = 0x54000008
         0x00000254:    6008        .`      STR      r0,[r1,#0]
-        0x00000256:    490d        .I      LDR      r1,[pc,#52] ; [0x28c] = 0x5400000c
+        0x00000256:    492a        *I      LDR      r1,[pc,#168] ; [0x300] = 0x5400000c
         0x00000258:    6008        .`      STR      r0,[r1,#0]
         0x0000025a:    e7ff        ..      B        0x25c ; main + 52
-        0x0000025c:    4a0c        .J      LDR      r2,[pc,#48] ; [0x290] = 0x53000004
+        0x0000025c:    4929        )I      LDR      r1,[pc,#164] ; [0x304] = 0x53000004
         0x0000025e:    2000        .       MOVS     r0,#0
-        0x00000260:    6010        .`      STR      r0,[r2,#0]
+        0x00000260:    6008        .`      STR      r0,[r1,#0]
         0x00000262:    2053        S       MOVS     r0,#0x53
-        0x00000264:    0601        ..      LSLS     r1,r0,#24
-        0x00000266:    6808        .h      LDR      r0,[r1,#0]
-        0x00000268:    9000        ..      STR      r0,[sp,#0]
-        0x0000026a:    2001        .       MOVS     r0,#1
-        0x0000026c:    6010        .`      STR      r0,[r2,#0]
-        0x0000026e:    9800        ..      LDR      r0,[sp,#0]
-        0x00000270:    6008        .`      STR      r0,[r1,#0]
-        0x00000272:    e7f3        ..      B        0x25c ; main + 52
+        0x00000264:    0600        ..      LSLS     r0,r0,#24
+        0x00000266:    6800        .h      LDR      r0,[r0,#0]
+        0x00000268:    9005        ..      STR      r0,[sp,#0x14]
+        0x0000026a:    9805        ..      LDR      r0,[sp,#0x14]
+        0x0000026c:    05c0        ..      LSLS     r0,r0,#23
+        0x0000026e:    0fc0        ..      LSRS     r0,r0,#31
+        0x00000270:    9004        ..      STR      r0,[sp,#0x10]
+        0x00000272:    9805        ..      LDR      r0,[sp,#0x14]
+        0x00000274:    0580        ..      LSLS     r0,r0,#22
+        0x00000276:    0fc0        ..      LSRS     r0,r0,#31
+        0x00000278:    9003        ..      STR      r0,[sp,#0xc]
+        0x0000027a:    9805        ..      LDR      r0,[sp,#0x14]
+        0x0000027c:    0540        @.      LSLS     r0,r0,#21
+        0x0000027e:    0fc0        ..      LSRS     r0,r0,#31
+        0x00000280:    9002        ..      STR      r0,[sp,#8]
+        0x00000282:    9805        ..      LDR      r0,[sp,#0x14]
+        0x00000284:    0500        ..      LSLS     r0,r0,#20
+        0x00000286:    0fc0        ..      LSRS     r0,r0,#31
+        0x00000288:    9001        ..      STR      r0,[sp,#4]
+        0x0000028a:    a805        ..      ADD      r0,sp,#0x14
+        0x0000028c:    7800        .x      LDRB     r0,[r0,#0]
+        0x0000028e:    9000        ..      STR      r0,[sp,#0]
+        0x00000290:    9804        ..      LDR      r0,[sp,#0x10]
+        0x00000292:    2800        .(      CMP      r0,#0
+        0x00000294:    d005        ..      BEQ      0x2a2 ; main + 122
+        0x00000296:    e7ff        ..      B        0x298 ; main + 112
+        0x00000298:    2051        Q       MOVS     r0,#0x51
+        0x0000029a:    0601        ..      LSLS     r1,r0,#24
+        0x0000029c:    2055        U       MOVS     r0,#0x55
+        0x0000029e:    6008        .`      STR      r0,[r1,#0]
+        0x000002a0:    e7ff        ..      B        0x2a2 ; main + 122
+        0x000002a2:    9803        ..      LDR      r0,[sp,#0xc]
+        0x000002a4:    2800        .(      CMP      r0,#0
+        0x000002a6:    d005        ..      BEQ      0x2b4 ; main + 140
+        0x000002a8:    e7ff        ..      B        0x2aa ; main + 130
+        0x000002aa:    2051        Q       MOVS     r0,#0x51
+        0x000002ac:    0601        ..      LSLS     r1,r0,#24
+        0x000002ae:    2044        D       MOVS     r0,#0x44
+        0x000002b0:    6008        .`      STR      r0,[r1,#0]
+        0x000002b2:    e7ff        ..      B        0x2b4 ; main + 140
+        0x000002b4:    9802        ..      LDR      r0,[sp,#8]
+        0x000002b6:    2800        .(      CMP      r0,#0
+        0x000002b8:    d005        ..      BEQ      0x2c6 ; main + 158
+        0x000002ba:    e7ff        ..      B        0x2bc ; main + 148
+        0x000002bc:    2051        Q       MOVS     r0,#0x51
+        0x000002be:    0601        ..      LSLS     r1,r0,#24
+        0x000002c0:    204c        L       MOVS     r0,#0x4c
+        0x000002c2:    6008        .`      STR      r0,[r1,#0]
+        0x000002c4:    e7ff        ..      B        0x2c6 ; main + 158
+        0x000002c6:    9801        ..      LDR      r0,[sp,#4]
+        0x000002c8:    2800        .(      CMP      r0,#0
+        0x000002ca:    d005        ..      BEQ      0x2d8 ; main + 176
+        0x000002cc:    e7ff        ..      B        0x2ce ; main + 166
+        0x000002ce:    2051        Q       MOVS     r0,#0x51
+        0x000002d0:    0601        ..      LSLS     r1,r0,#24
+        0x000002d2:    2052        R       MOVS     r0,#0x52
+        0x000002d4:    6008        .`      STR      r0,[r1,#0]
+        0x000002d6:    e7ff        ..      B        0x2d8 ; main + 176
+        0x000002d8:    490a        .I      LDR      r1,[pc,#40] ; [0x304] = 0x53000004
+        0x000002da:    2001        .       MOVS     r0,#1
+        0x000002dc:    6008        .`      STR      r0,[r1,#0]
+        0x000002de:    9800        ..      LDR      r0,[sp,#0]
+        0x000002e0:    2153        S!      MOVS     r1,#0x53
+        0x000002e2:    0609        ..      LSLS     r1,r1,#24
+        0x000002e4:    6008        .`      STR      r0,[r1,#0]
+        0x000002e6:    e7b9        ..      B        0x25c ; main + 52
     $d
     __arm_cp.2_0
-        0x00000274:    02faf080    ....    DCD    50000000
+        0x000002e8:    02faf080    ....    DCD    50000000
     __arm_cp.2_1
-        0x00000278:    52000008    ...R    DCD    1375731720
+        0x000002ec:    52000008    ...R    DCD    1375731720
     __arm_cp.2_2
-        0x0000027c:    e000e400    ....    DCD    3758154752
+        0x000002f0:    e000e400    ....    DCD    3758154752
     __arm_cp.2_3
-        0x00000280:    e000e100    ....    DCD    3758153984
+        0x000002f4:    e000e100    ....    DCD    3758153984
     __arm_cp.2_4
-        0x00000284:    54000004    ...T    DCD    1409286148
+        0x000002f8:    54000004    ...T    DCD    1409286148
     __arm_cp.2_5
-        0x00000288:    54000008    ...T    DCD    1409286152
+        0x000002fc:    54000008    ...T    DCD    1409286152
     __arm_cp.2_6
-        0x0000028c:    5400000c    ...T    DCD    1409286156
+        0x00000300:    5400000c    ...T    DCD    1409286156
     __arm_cp.2_7
-        0x00000290:    53000004    ...S    DCD    1392508932
+        0x00000304:    53000004    ...S    DCD    1392508932
     $d.realdata
     Region$$Table$$Base
-        0x00000294:    000002b4    ....    DCD    692
-        0x00000298:    00002000    . ..    DCD    8192
-        0x0000029c:    00000004    ....    DCD    4
-        0x000002a0:    000000dc    ....    DCD    220
-        0x000002a4:    000002b8    ....    DCD    696
-        0x000002a8:    00002010    . ..    DCD    8208
-        0x000002ac:    00000860    `...    DCD    2144
-        0x000002b0:    000000fc    ....    DCD    252
+        0x00000308:    00000328    (...    DCD    808
+        0x0000030c:    00002000    . ..    DCD    8192
+        0x00000310:    00000004    ....    DCD    4
+        0x00000314:    000000dc    ....    DCD    220
+        0x00000318:    0000032c    ,...    DCD    812
+        0x0000031c:    00002010    . ..    DCD    8208
+        0x00000320:    00000860    `...    DCD    2144
+        0x00000324:    000000fc    ....    DCD    252
     Region$$Table$$Limit
 
 ====================================
@@ -498,7 +556,7 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : SHF_ALLOC + SHF_WRITE (0x00000003)
     Addr        : 0x00002000
-    File Offset : 756 (0x2f4)
+    File Offset : 872 (0x368)
     Size        : 4 bytes (0x4)
     Link        : SHN_UNDEF
     Info        : 0
@@ -514,7 +572,7 @@
     Type        : SHT_NOBITS (0x00000008)
     Flags       : SHF_ALLOC + SHF_WRITE (0x00000003)
     Addr        : 0x00002010
-    File Offset : 760 (0x2f8)
+    File Offset : 876 (0x36c)
     Size        : 2144 bytes (0x860)
     Link        : SHN_UNDEF
     Info        : 0
@@ -530,7 +588,7 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 760 (0x2f8)
+    File Offset : 876 (0x36c)
     Size        : 158 bytes (0x9e)
     Link        : SHN_UNDEF
     Info        : 0
@@ -546,7 +604,7 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 918 (0x396)
+    File Offset : 1034 (0x40a)
     Size        : 696 bytes (0x2b8)
     Link        : SHN_UNDEF
     Info        : 0
@@ -562,8 +620,8 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 1614 (0x64e)
-    Size        : 364 bytes (0x16c)
+    File Offset : 1730 (0x6c2)
+    Size        : 460 bytes (0x1cc)
     Link        : SHN_UNDEF
     Info        : 0
     Alignment   : 1
@@ -578,8 +636,8 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 1978 (0x7ba)
-    Size        : 287 bytes (0x11f)
+    File Offset : 2190 (0x88e)
+    Size        : 422 bytes (0x1a6)
     Link        : SHN_UNDEF
     Info        : 0
     Alignment   : 1
@@ -594,7 +652,7 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 2265 (0x8d9)
+    File Offset : 2612 (0xa34)
     Size        : 32 bytes (0x20)
     Link        : SHN_UNDEF
     Info        : 0
@@ -610,8 +668,8 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 2297 (0x8f9)
-    Size        : 159 bytes (0x9f)
+    File Offset : 2644 (0xa54)
+    Size        : 202 bytes (0xca)
     Link        : SHN_UNDEF
     Info        : 0
     Alignment   : 1
@@ -626,7 +684,7 @@
     Type        : SHT_SYMTAB (0x00000002)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 2456 (0x998)
+    File Offset : 2848 (0xb20)
     Size        : 3488 bytes (0xda0)
     Link        : Section 11 (.strtab)
     Info        : Last local symbol no = 142
@@ -642,7 +700,7 @@
     Type        : SHT_STRTAB (0x00000003)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 5944 (0x1738)
+    File Offset : 6336 (0x18c0)
     Size        : 3636 bytes (0xe34)
     Link        : SHN_UNDEF
     Info        : 0
@@ -658,7 +716,7 @@
     Type        : SHT_NOTE (0x00000007)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 9580 (0x256c)
+    File Offset : 9972 (0x26f4)
     Size        : 28 bytes (0x1c)
     Link        : SHN_UNDEF
     Info        : 0
@@ -680,7 +738,7 @@
     Type        : SHT_PROGBITS (0x00000001)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 9608 (0x2588)
+    File Offset : 10000 (0x2710)
     Size        : 1400 bytes (0x578)
     Link        : SHN_UNDEF
     Info        : 0
@@ -719,7 +777,7 @@
     Type        : SHT_STRTAB (0x00000003)
     Flags       : None (0x00000000)
     Addr        : 0x00000000
-    File Offset : 11008 (0x2b00)
+    File Offset : 11400 (0x2c88)
     Size        : 136 bytes (0x88)
     Link        : SHN_UNDEF
     Info        : 0

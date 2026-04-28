@@ -4,11 +4,11 @@ create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports CLK
 #Active high RESET - BTNC (center) on Basys 3 board
 set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33} [get_ports RESET]
 
-#Directional buttons
-set_property -dict {PACKAGE_PIN T18 IOSTANDARD LVCMOS33} [get_ports btnU]
-set_property -dict {PACKAGE_PIN U17 IOSTANDARD LVCMOS33} [get_ports btnD]
-set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33} [get_ports btnL]
-set_property -dict {PACKAGE_PIN T17 IOSTANDARD LVCMOS33} [get_ports btnR]
+#Directional buttons (btn[0]=U, btn[1]=D, btn[2]=L, btn[3]=R)
+set_property -dict {PACKAGE_PIN T18 IOSTANDARD LVCMOS33} [get_ports {btn[0]}]
+set_property -dict {PACKAGE_PIN U17 IOSTANDARD LVCMOS33} [get_ports {btn[1]}]
+set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33} [get_ports {btn[2]}]
+set_property -dict {PACKAGE_PIN T17 IOSTANDARD LVCMOS33} [get_ports {btn[3]}]
 #LEDs
 set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33} [get_ports LED[0]]
 set_property -dict {PACKAGE_PIN E19 IOSTANDARD LVCMOS33} [get_ports LED[1]]

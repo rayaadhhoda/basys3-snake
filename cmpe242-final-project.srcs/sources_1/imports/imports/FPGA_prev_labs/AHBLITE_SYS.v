@@ -55,7 +55,10 @@ module AHBLITE_SYS(
 
 	// Switch Inputs
     input  wire    [7:0] sw,
-    
+
+    // Directional buttons (U, D, L, R)
+    input  wire    [3:0] btn,
+
     // 7 Segment display
     output wire    [6:0] seg,
     output wire          dp,
@@ -405,7 +408,7 @@ module AHBLITE_SYS(
         .HTRANS(htranss),
         .HSEL(hsel_gpio),
         .HREADY(hreadys),
-        .GPIOIN({8'b00000000, sw[7:0]}),
+        .GPIOIN({4'b0000, btn[3:0], sw[7:0]}),
         .HREADYOUT(hready_gpio),
         .HRDATA(hrdata_gpio),
         .GPIOOUT(LED[7:0])
