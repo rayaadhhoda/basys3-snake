@@ -62,11 +62,24 @@ volatile int dir_y = 0;
 void UART_ISR()  {}
 	
 void Timer_ISR() {
-    draw_cell(player_col, player_row, COLOR_BLACK);
+    // Read buttons
+    *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;  // read mode
+    int input = *(volatile unsigned int*) AHB_GPIO_BASE;
+    int btnU = (input >> 8) & 1;
+    int btnD = (input >> 9) & 1;
+    int btnL = (input >> 10) & 1;
+    int btnR = (input >> 11) & 1;
 
+    // Update direction, no 180° reversal
+    if      (btnU && dir_y != 1)  { dir_x = 0;  dir_y = -1; }
+    else if (btnD && dir_y != -1) { dir_x = 0;  dir_y =  1; }
+    else if (btnL && dir_x != 1)  { dir_x = -1; dir_y =  0; }
+    else if (btnR && dir_x != -1) { dir_x = 1;  dir_y =  0; }
+
+    // Move square
+    draw_cell(player_col, player_row, COLOR_BLACK);
     player_col += dir_x;
     player_row += dir_y;
-
     draw_cell(player_col, player_row, COLOR_GREEN);
 
     *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;  // clear timer interrupt flag
