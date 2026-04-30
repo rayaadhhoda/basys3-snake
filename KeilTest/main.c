@@ -96,8 +96,8 @@ int main(void) {
 
     draw_cell(player_col, player_row, COLOR_GREEN);
 
-    // Timer: fire every 6,250,000 cycles = 8 Hz at 50 MHz
-    *(volatile unsigned int*) AHB_TIMER_BASE        = 6250000;
+    // Timer: fire every 8,333,333 cycles = 6 Hz at 50 MHz
+    *(volatile unsigned int*) AHB_TIMER_BASE        = 8333333;
     *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x03;    // enable, auto-reload
 
     // NVIC: enable timer interrupt (IRQ0), UART interrupt (IRQ1)
