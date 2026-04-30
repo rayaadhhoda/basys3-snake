@@ -30,6 +30,28 @@ void draw_cell(int col, int row, unsigned char color) {
             draw_pixel(col * CELL + dx, row * CELL + dy, color);
 }
 
+void clear_grid(unsigned char color) {
+    for (int row = 0; row < ROWS; row++) {
+        for (int col = 0; col < COLS; col++) {
+            draw_cell(col, row, color);
+        }
+    }
+}
+
+void draw_border(unsigned char color) {
+    // Top and bottom rows
+    for (int col = 0; col < COLS; col++) {
+        draw_cell(col, 0, color);
+        draw_cell(col, ROWS - 1, color);
+    }
+
+    // Left and right columns
+    for (int row = 1; row < ROWS - 1; row++) {
+        draw_cell(0, row, color);
+        draw_cell(COLS - 1, row, color);
+    }
+}
+
 // --- ISR stubs (required by cm0dsasm.s vector table) ---
 
 void UART_ISR()  {}
@@ -39,12 +61,17 @@ void Timer_ISR() {}
 
 int main(void) {
     // Wait for BRAM reset walk to complete before drawing
-    for (volatile int i = 0; i < 100000; i++);
+	for (volatile int i = 0; i < 100000; i++);
 
-    // Draw a green rectangle in the center of the grid
-    for (int row = 8; row < 16; row++)
-        for (int col = 6; col < 14; col++)
-            draw_cell(col, row, COLOR_GREEN);
+	clear_grid(COLOR_BLACK);
+	draw_border(COLOR_WHITE);
+	
+	draw_cell(0, 0, COLOR_RED);
+	draw_cell(COLS - 1, 0, COLOR_GREEN);
+	draw_cell(0, ROWS - 1, COLOR_BLUE);
+	draw_cell(COLS - 1, ROWS - 1, COLOR_WHITE);
 
-    while(1) {}
+	while(1) {
+		
+	}
 }
