@@ -67,6 +67,13 @@ volatile int food_row = 0;
 // Score
 volatile int score = 0;
 
+void display_score(int s) {
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x0C)  = (s / 1000) % 10; // thousands
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x08) = (s / 100)  % 10;  // hundreds
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x04) = (s / 10)   % 10;  // tens
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x00) =  s         % 10;  // ones
+}
+
 // --- LFSR pseudo-random number generator ---
 
 volatile unsigned int lfsr = 0xACE1;  // non-zero seed
@@ -142,7 +149,7 @@ void Timer_ISR() {
     } else {
         // Ate food: skip tail erase (grow), increment score, spawn new food
         score++;
-        *(volatile unsigned int*) AHB_7SEG_BASE = score;
+        display_score(score);
         spawn_food();
     }
 
@@ -187,11 +194,8 @@ int main(void) {
     for (int i = 0; i < 3; i++)
         draw_cell(snake_col[i], snake_row[i], COLOR_GREEN);
 
-    // Reset 7-seg score display
-    *(volatile unsigned int*) AHB_7SEG_BASE         = 0;
-    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x04) = 0;
-    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x08) = 0;
-    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x0C) = 0;
+    // Reset 7-seg score display to 0000
+    display_score(0);
 
     // Spawn first food
     spawn_food();
