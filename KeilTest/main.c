@@ -7,9 +7,10 @@
 #define NVIC_INT_ENABLE     0xE000E100
 #define NVIC_INT_PRIORITY0  0xE000E400
 
-#define COLS 20
-#define ROWS 24
-#define CELL 5
+#define COLS    20
+#define ROWS    24
+#define CELL    5
+#define MAX_LEN 480  // max possible snake length (20*24)
 
 #define COLOR_BLACK  0x00
 #define COLOR_WHITE  0xFF
@@ -31,39 +32,38 @@ void draw_cell(int col, int row, unsigned char color) {
 }
 
 void clear_grid(unsigned char color) {
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLS; col++) {
+    for (int row = 0; row < ROWS; row++)
+        for (int col = 0; col < COLS; col++)
             draw_cell(col, row, color);
-        }
-    }
 }
 
 void draw_border(unsigned char color) {
-    // Top and bottom rows
     for (int col = 0; col < COLS; col++) {
-        draw_cell(col, 0, color);
-        draw_cell(col, ROWS - 1, color);
+        draw_cell(col, 0,        color);  // top
+        draw_cell(col, ROWS - 1, color);  // bottom
     }
-
-    // Left and right columns
     for (int row = 1; row < ROWS - 1; row++) {
-        draw_cell(0, row, color);
-        draw_cell(COLS - 1, row, color);
+        draw_cell(0,        row, color);  // left
+        draw_cell(COLS - 1, row, color);  // right
     }
 }
 
-// --- ISR stubs (required by cm0dsasm.s vector table) ---
+// --- Snake state ---
 
-volatile int player_col = 5;
-volatile int player_row = 5;
+volatile int snake_col[MAX_LEN];
+volatile int snake_row[MAX_LEN];
+volatile int head_idx = 2;
+volatile int tail_idx = 0;
 volatile int dir_x = 1;
 volatile int dir_y = 0;
 
-void UART_ISR()  {}
-	
+// --- ISR ---
+
+void UART_ISR() {}
+
 void Timer_ISR() {
     // Read buttons
-    *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;  // read mode
+    *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;
     int input = *(volatile unsigned int*) AHB_GPIO_BASE;
     int btnU = (input >> 8) & 1;
     int btnD = (input >> 9) & 1;
@@ -76,11 +76,19 @@ void Timer_ISR() {
     else if (btnL && dir_x != 1)  { dir_x = -1; dir_y =  0; }
     else if (btnR && dir_x != -1) { dir_x = 1;  dir_y =  0; }
 
-    // Move square
-    draw_cell(player_col, player_row, COLOR_BLACK);
-    player_col += dir_x;
-    player_row += dir_y;
-    draw_cell(player_col, player_row, COLOR_GREEN);
+    // Compute new head position
+    int new_col = snake_col[head_idx] + dir_x;
+    int new_row = snake_row[head_idx] + dir_y;
+
+    // Erase tail
+    draw_cell(snake_col[tail_idx], snake_row[tail_idx], COLOR_BLACK);
+    tail_idx = (tail_idx + 1) % MAX_LEN;
+
+    // Push new head
+    head_idx = (head_idx + 1) % MAX_LEN;
+    snake_col[head_idx] = new_col;
+    snake_row[head_idx] = new_row;
+    draw_cell(new_col, new_row, COLOR_GREEN);
 
     *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;  // clear timer interrupt flag
 }
@@ -88,21 +96,30 @@ void Timer_ISR() {
 // --- Main ---
 
 int main(void) {
-    // Wait for BRAM reset walk to complete before drawing
+    // Wait for BRAM reset walk to complete
     for (volatile int i = 0; i < 100000; i++);
+
+    // Initialize snake: 3 segments at row 12, cols 3-4-5, moving right
+    snake_col[0] = 3; snake_row[0] = 12;  // tail
+    snake_col[1] = 4; snake_row[1] = 12;
+    snake_col[2] = 5; snake_row[2] = 12;  // head
+    head_idx = 2;
+    tail_idx = 0;
 
     clear_grid(COLOR_BLACK);
     draw_border(COLOR_WHITE);
 
-    draw_cell(player_col, player_row, COLOR_GREEN);
+    // Draw initial snake
+    for (int i = 0; i < 3; i++)
+        draw_cell(snake_col[i], snake_row[i], COLOR_GREEN);
 
-    // Timer: fire every 8,333,333 cycles = 6 Hz at 50 MHz
-    *(volatile unsigned int*) AHB_TIMER_BASE        = 8333333;
-    *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x03;    // enable, auto-reload
+    // Timer: 6 Hz at 50 MHz
+    *(volatile unsigned int*) AHB_TIMER_BASE         = 8333333;
+    *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x03;
 
-    // NVIC: enable timer interrupt (IRQ0), UART interrupt (IRQ1)
-    *(volatile unsigned int*) NVIC_INT_PRIORITY0 = 0x00000000;  // highest priority
-    *(volatile unsigned int*) NVIC_INT_ENABLE    = 0x00000001;  // enable IRQ0 (timer only)
+    // NVIC: enable timer interrupt (IRQ0)
+    *(volatile unsigned int*) NVIC_INT_PRIORITY0 = 0x00000000;
+    *(volatile unsigned int*) NVIC_INT_ENABLE    = 0x00000001;
 
     while(1) {}
 }
