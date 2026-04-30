@@ -57,14 +57,50 @@ volatile int tail_idx = 0;
 volatile int dir_x    = 1;
 volatile int dir_y    = 0;
 
-// grid: 0=empty, 1=snake — used for self-collision detection
+// grid: 0=empty, 1=snake, 2=food
 int grid[ROWS][COLS];
+
+// Food position
+volatile int food_col = 0;
+volatile int food_row = 0;
+
+// Score
+volatile int score = 0;
+
+// --- LFSR pseudo-random number generator ---
+
+volatile unsigned int lfsr = 0xACE1;  // non-zero seed
+
+unsigned int lfsr_next() {
+    // 16-bit Galois LFSR, taps at bits 16,14,13,11
+    unsigned int lsb = lfsr & 1;
+    lfsr >>= 1;
+    if (lsb) lfsr ^= 0xB400;
+    return lfsr;
+}
+
+// Spawn food at a random empty cell (avoids snake body and border)
+void spawn_food() {
+    int col, row;
+    do {
+        col = (lfsr_next() % (COLS - 2)) + 1;  // cols 1..COLS-2
+        row = (lfsr_next() % (ROWS - 2)) + 1;  // rows 1..ROWS-2
+    } while (grid[row][col] != 0);
+
+    food_col = col;
+    food_row = row;
+    grid[row][col] = 2;
+    draw_cell(col, row, COLOR_RED);
+}
 
 // --- ISR ---
 
 void UART_ISR() {}
 
 void Timer_ISR() {
+    // Advance LFSR every tick so seed varies with play time
+    lfsr_next();
+
     // Read buttons
     *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;
     int input = *(volatile unsigned int*) AHB_GPIO_BASE;
@@ -90,15 +126,25 @@ void Timer_ISR() {
 
     // Self-collision check — game over: stop the timer
     if (grid[new_row][new_col] == 1) {
-        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;  // disable timer
-        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;     // clear flag
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;
         return;
     }
 
-    // Erase tail
-    grid[snake_row[tail_idx]][snake_col[tail_idx]] = 0;
-    draw_cell(snake_col[tail_idx], snake_row[tail_idx], COLOR_BLACK);
-    tail_idx = (tail_idx + 1) % MAX_LEN;
+    // Check food collision
+    int ate_food = (new_col == food_col && new_row == food_row);
+
+    if (!ate_food) {
+        // Normal move: erase tail
+        grid[snake_row[tail_idx]][snake_col[tail_idx]] = 0;
+        draw_cell(snake_col[tail_idx], snake_row[tail_idx], COLOR_BLACK);
+        tail_idx = (tail_idx + 1) % MAX_LEN;
+    } else {
+        // Ate food: skip tail erase (grow), increment score, spawn new food
+        score++;
+        *(volatile unsigned int*) AHB_7SEG_BASE = score;
+        spawn_food();
+    }
 
     // Push new head
     head_idx = (head_idx + 1) % MAX_LEN;
@@ -124,6 +170,7 @@ int main(void) {
     tail_idx = 0;
     dir_x = 1;
     dir_y = 0;
+    score = 0;
 
     // Initialize grid
     for (int r = 0; r < ROWS; r++)
@@ -139,6 +186,15 @@ int main(void) {
     // Draw initial snake
     for (int i = 0; i < 3; i++)
         draw_cell(snake_col[i], snake_row[i], COLOR_GREEN);
+
+    // Reset 7-seg score display
+    *(volatile unsigned int*) AHB_7SEG_BASE         = 0;
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x04) = 0;
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x08) = 0;
+    *(volatile unsigned int*)(AHB_7SEG_BASE + 0x0C) = 0;
+
+    // Spawn first food
+    spawn_food();
 
     // Timer: 6 Hz at 50 MHz
     *(volatile unsigned int*) AHB_TIMER_BASE         = 8333333;
