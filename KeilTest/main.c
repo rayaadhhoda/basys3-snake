@@ -100,6 +100,30 @@ void spawn_food() {
     draw_cell(col, row, COLOR_RED);
 }
 
+// --- Console print ---
+
+void console_putc(char c) {
+    *(volatile unsigned int*) AHB_VGA_BASE = c;
+}
+
+void console_print(const char* s) {
+    while (*s) console_putc(*s++);
+}
+
+void console_print_int(int n) {
+    if (n >= 1000) console_putc('0' + (n / 1000) % 10);
+    if (n >= 100)  console_putc('0' + (n / 100)  % 10);
+    if (n >= 10)   console_putc('0' + (n / 10)   % 10);
+    console_putc('0' + n % 10);
+}
+
+void game_over_screen() {
+    console_print("Game Over\n");
+    console_print("Score: ");
+    console_print_int(score);
+    console_putc('\n');
+}
+
 // --- ISR ---
 
 void UART_ISR() {}
@@ -131,10 +155,11 @@ void Timer_ISR() {
     if (new_row < 1)        new_row = ROWS - 2;
     if (new_row > ROWS - 2) new_row = 1;
 
-    // Self-collision check — game over: stop the timer
+    // Self-collision check — game over: stop the timer and show screen
     if (grid[new_row][new_col] == 1) {
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;
+        game_over_screen();
         return;
     }
 
