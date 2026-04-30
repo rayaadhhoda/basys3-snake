@@ -54,24 +54,42 @@ void draw_border(unsigned char color) {
 
 // --- ISR stubs (required by cm0dsasm.s vector table) ---
 
+volatile int player_col = 5;
+volatile int player_row = 5;
+volatile int dir_x = 1;
+volatile int dir_y = 0;
+
 void UART_ISR()  {}
-void Timer_ISR() {}
+	
+void Timer_ISR() {
+    draw_cell(player_col, player_row, COLOR_BLACK);
+
+    player_col += dir_x;
+    player_row += dir_y;
+
+    draw_cell(player_col, player_row, COLOR_GREEN);
+
+    *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;  // clear timer interrupt flag
+}
 
 // --- Main ---
 
 int main(void) {
     // Wait for BRAM reset walk to complete before drawing
-	for (volatile int i = 0; i < 100000; i++);
+    for (volatile int i = 0; i < 100000; i++);
 
-	clear_grid(COLOR_BLACK);
-	draw_border(COLOR_WHITE);
-	
-	draw_cell(0, 0, COLOR_RED);
-	draw_cell(COLS - 1, 0, COLOR_GREEN);
-	draw_cell(0, ROWS - 1, COLOR_BLUE);
-	draw_cell(COLS - 1, ROWS - 1, COLOR_WHITE);
+    clear_grid(COLOR_BLACK);
+    draw_border(COLOR_WHITE);
 
-	while(1) {
-		
-	}
+    draw_cell(player_col, player_row, COLOR_GREEN);
+
+    // Timer: fire every 6,250,000 cycles = 8 Hz at 50 MHz
+    *(volatile unsigned int*) AHB_TIMER_BASE        = 6250000;
+    *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x03;    // enable, auto-reload
+
+    // NVIC: enable timer interrupt (IRQ0), UART interrupt (IRQ1)
+    *(volatile unsigned int*) NVIC_INT_PRIORITY0 = 0x00000000;  // highest priority
+    *(volatile unsigned int*) NVIC_INT_ENABLE    = 0x00000001;  // enable IRQ0 (timer only)
+
+    while(1) {}
 }
