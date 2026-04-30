@@ -54,8 +54,11 @@ volatile int snake_col[MAX_LEN];
 volatile int snake_row[MAX_LEN];
 volatile int head_idx = 2;
 volatile int tail_idx = 0;
-volatile int dir_x = 1;
-volatile int dir_y = 0;
+volatile int dir_x    = 1;
+volatile int dir_y    = 0;
+
+// grid: 0=empty, 1=snake — used for self-collision detection
+int grid[ROWS][COLS];
 
 // --- ISR ---
 
@@ -76,11 +79,24 @@ void Timer_ISR() {
     else if (btnL && dir_x != 1)  { dir_x = -1; dir_y =  0; }
     else if (btnR && dir_x != -1) { dir_x = 1;  dir_y =  0; }
 
-    // Compute new head position
+    // Compute new head position with wrap-around inside the border
     int new_col = snake_col[head_idx] + dir_x;
     int new_row = snake_row[head_idx] + dir_y;
 
+    if (new_col < 1)        new_col = COLS - 2;
+    if (new_col > COLS - 2) new_col = 1;
+    if (new_row < 1)        new_row = ROWS - 2;
+    if (new_row > ROWS - 2) new_row = 1;
+
+    // Self-collision check — game over: stop the timer
+    if (grid[new_row][new_col] == 1) {
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;  // disable timer
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;     // clear flag
+        return;
+    }
+
     // Erase tail
+    grid[snake_row[tail_idx]][snake_col[tail_idx]] = 0;
     draw_cell(snake_col[tail_idx], snake_row[tail_idx], COLOR_BLACK);
     tail_idx = (tail_idx + 1) % MAX_LEN;
 
@@ -88,6 +104,7 @@ void Timer_ISR() {
     head_idx = (head_idx + 1) % MAX_LEN;
     snake_col[head_idx] = new_col;
     snake_row[head_idx] = new_row;
+    grid[new_row][new_col] = 1;
     draw_cell(new_col, new_row, COLOR_GREEN);
 
     *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;  // clear timer interrupt flag
@@ -105,6 +122,16 @@ int main(void) {
     snake_col[2] = 5; snake_row[2] = 12;  // head
     head_idx = 2;
     tail_idx = 0;
+    dir_x = 1;
+    dir_y = 0;
+
+    // Initialize grid
+    for (int r = 0; r < ROWS; r++)
+        for (int c = 0; c < COLS; c++)
+            grid[r][c] = 0;
+    grid[12][3] = 1;
+    grid[12][4] = 1;
+    grid[12][5] = 1;
 
     clear_grid(COLOR_BLACK);
     draw_border(COLOR_WHITE);
