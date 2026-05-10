@@ -66,6 +66,22 @@ volatile int food_row = 0;
 
 // Score
 volatile int score = 0;
+volatile int high_score = 0;
+
+// Speed control via switches
+volatile int prev_sw_speed = -1;  // force initial update
+const unsigned int speed_reload[4] = {
+    8333333,   // none:                 6 Hz  (normal)
+    25000000,  // sw[0] (slow):         2 Hz
+    8333333,   // sw[1] (normal/base):  6 Hz
+    4166666    // sw[2] (fast):         12 Hz
+};
+const unsigned int speed_led[4] = {
+    0x00,  // none:  LEDs off
+    0x01,  // sw[0]: LED[0] on
+    0x02,  // sw[1]: LED[1] on
+    0x04   // sw[2]: LED[2] on
+};
 
 void display_score(int s) {
     *(volatile unsigned int*)(AHB_7SEG_BASE + 0x0C)  = (s / 1000) % 10; // thousands
@@ -122,6 +138,9 @@ void game_over_screen() {
     console_print("Score: ");
     console_print_int(score);
     console_putc('\n');
+    console_print("High Score: ");
+    console_print_int(high_score);
+    console_putc('\n');
 }
 
 // --- ISR ---
@@ -139,6 +158,24 @@ void Timer_ISR() {
     int btnD = (input >> 9) & 1;
     int btnL = (input >> 10) & 1;
     int btnR = (input >> 11) & 1;
+
+    // Read switches for speed selection (sw[2:0] on GPIO bits [2:0])
+    // Exclusive: left = slow, center = normal, right = fast
+    int speed_idx = 0;  // default (normal)
+    if      ((input >> 2) & 1) speed_idx = 3;  // sw[2]: fast
+    else if ((input >> 1) & 1) speed_idx = 2;  // sw[1]: normal
+    else if ((input >> 0) & 1) speed_idx = 1;  // sw[0]: slow
+
+    if (speed_idx != prev_sw_speed) {
+        prev_sw_speed = speed_idx;
+        // Update timer reload
+        *(volatile unsigned int*) AHB_TIMER_BASE = speed_reload[speed_idx];
+        // Set direction to output, then write LEDs
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0001;
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x00) = speed_led[speed_idx];
+        // Restore direction to input for next read
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;
+    }
 
     // Update direction, no 180° reversal
     if      (btnU && dir_y != 1)  { dir_x = 0;  dir_y = -1; }
@@ -159,6 +196,26 @@ void Timer_ISR() {
     if (grid[new_row][new_col] == 1) {
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;
+
+        // Check for new high score
+        int new_high = 0;
+        if (score > high_score) {
+            high_score = score;
+            new_high = 1;
+        }
+
+        // Flash LEDs on new high score (busy-wait, timer is stopped)
+        // Switch GPIO to output for LEDs
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0001;
+        for (int f = 0; f < (new_high ? 4 : 1); f++) {
+            *(volatile unsigned int*)(AHB_GPIO_BASE + 0x00) = 0xFF;  // all on
+            for (volatile int d = 0; d < 2500000; d++);              // ~200ms
+            *(volatile unsigned int*)(AHB_GPIO_BASE + 0x00) = 0x00;  // all off
+            for (volatile int d = 0; d < 2500000; d++);
+        }
+        // Restore GPIO to input
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;
+
         game_over_screen();
         return;
     }
