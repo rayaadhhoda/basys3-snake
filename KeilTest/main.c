@@ -133,8 +133,22 @@ void console_print_int(int n) {
     console_putc('0' + n % 10);
 }
 
+// Redraw score/high-score text on the VGA console (left panel, 30 chars wide)
+void draw_score_text() {
+    // Write at the top of the console — push previous text down
+    console_print("Score: ");
+    // Pad with leading spaces so the score text overwrites old "High: ..." residue
+    console_print_int(score);
+    console_print("                ");   // pad to clear old text
+    console_putc('\n');
+    console_print("High: ");
+    console_print_int(high_score);
+    console_print("                ");   // pad to clear old text
+    console_putc('\n');
+}
+
 void game_over_screen() {
-    console_print("Game Over\n");
+    console_print("\n\n\n\nGame Over\n");
     console_print("Score: ");
     console_print_int(score);
     console_putc('\n');
@@ -183,16 +197,39 @@ void Timer_ISR() {
     else if (btnL && dir_x != 1)  { dir_x = -1; dir_y =  0; }
     else if (btnR && dir_x != -1) { dir_x = 1;  dir_y =  0; }
 
-    // Compute new head position with wrap-around inside the border
+    // Compute new head position
     int new_col = snake_col[head_idx] + dir_x;
     int new_row = snake_row[head_idx] + dir_y;
 
-    if (new_col < 1)        new_col = COLS - 2;
-    if (new_col > COLS - 2) new_col = 1;
-    if (new_row < 1)        new_row = ROWS - 2;
-    if (new_row > ROWS - 2) new_row = 1;
+    // Wall collision — game over (same handler as self-collision)
+    if (new_col < 1 || new_col >= COLS - 1 || new_row < 1 || new_row >= ROWS - 1) {
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;
+        *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;
 
-    // Self-collision check — game over: stop the timer and show screen
+        // Check for new high score
+        int new_high = 0;
+        if (score > high_score) {
+            high_score = score;
+            new_high = 1;
+        }
+
+        // Flash LEDs on new high score (busy-wait, timer is stopped)
+        // Switch GPIO to output for LEDs
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0001;
+        for (int f = 0; f < (new_high ? 4 : 1); f++) {
+            *(volatile unsigned int*)(AHB_GPIO_BASE + 0x00) = 0xFF;  // all on
+            for (volatile int d = 0; d < 2500000; d++);              // ~200ms
+            *(volatile unsigned int*)(AHB_GPIO_BASE + 0x00) = 0x00;  // all off
+            for (volatile int d = 0; d < 2500000; d++);
+        }
+        // Restore GPIO to input
+        *(volatile unsigned int*)(AHB_GPIO_BASE + 0x04) = 0x0000;
+
+        game_over_screen();
+        return;
+    }
+
+    // Self-collision check — game over
     if (grid[new_row][new_col] == 1) {
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x08) = 0x00;
         *(volatile unsigned int*)(AHB_TIMER_BASE + 0x0C) = 1;
@@ -232,6 +269,7 @@ void Timer_ISR() {
         // Ate food: skip tail erase (grow), increment score, spawn new food
         score++;
         display_score(score);
+        draw_score_text();
         spawn_food();
     }
 
@@ -278,6 +316,9 @@ int main(void) {
 
     // Reset 7-seg score display to 0000
     display_score(0);
+
+    // Show initial score on VGA console
+    draw_score_text();
 
     // Spawn first food
     spawn_food();
